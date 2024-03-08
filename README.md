@@ -20,6 +20,9 @@ This library allows you to extract colors from an image, which can be used to de
 It uses the Relative Luminance, Hue, and Lightness values to sample to colors. 
 
 Compared to other color extraction packages in Dart, this package is lightweight, fast and simple to use, removing all the bloat and only providing you with only what you need. Additionally, it also supports usage in pure Dart projects.
+<div style="display:flex; justify-content:center; align-items:center; height:100vh;">
+    <img src="https://github.com/fisherman-23/colorgram-dart/assets/103990540/74ca1fa0-b6d2-4a7b-a3c9-3751e3a76e68" alt="Showcase Image" width="300">
+</div>
 
 Supports:
 
