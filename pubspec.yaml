@@ -1,5 +1,5 @@
 name: colorgram
-version: 1.0.0
+version: 1.0.1
 description: Colorgram is a lightweight tool that allows you to extract prominent colors from image. This is a Dart port of the original Colorgram.js library.
 homepage: https://github.com/fisherman-23/colorgram-dart/
 repository: https://github.com/fisherman-23/colorgram-dart/
