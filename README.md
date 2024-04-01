@@ -19,7 +19,7 @@ This library allows you to extract colors from an image, which can be used to de
 
 It uses the Relative Luminance, Hue, and Lightness values to sample to colors. 
 
-Compared to other color extraction packages in Dart, this package is lightweight, fast and simple to use, removing all the bloat and only providing you with only what you need. Additionally, it also supports usage in pure Dart projects.
+Compared to other color extraction packages in Dart, this package is lightweight, fast and simple to use, removing all the bloat and only providing you with only what you need.
 <div style="display:flex; justify-content:center; align-items:center; height:100vh;">
     <img src="https://github.com/fisherman-23/colorgram-dart/assets/103990540/74ca1fa0-b6d2-4a7b-a3c9-3751e3a76e68" alt="Showcase Image" width="300">
 </div>
@@ -30,41 +30,30 @@ Supports:
     PNG / Animated APNG
     GIF / Animated GIF
     BMP
-    TIFF
-    TGA
-    PVR
-    ICO
     WebP / Animated WebP
-    PSD
-    EXR
 
-(bascially any file that the Image library supports read operations for)
+(based on supported file types by ImageProvider, other file types might be supported)
 
-Benchmarks: (Desktop)
-- 512x512 JPEG in ~ 100ms
-- 5120x1440 JPEG in ~1000ms
+Benchmarks: (Desktop) without resizing
+- 512x512 JPEG in ~ 30ms
+- 5120x1440 JPEG in ~200ms
 
 ## Getting started
-Please ensure your image is converted into a File object from the File class in dart:io
+Please ensure your data is in an ImageProvider Object
 
-1. If you have a file path, simply wrap it in a File function
-```dart
-final file = File('PATH TO YOUR IMAGE');
-```
-2. If you have a XFile type (used in image_picker & more) 
-```dart
-final rawXFile;
-final file = File(rawXFile.path);
-```
+- FileImage
+- NetworkImage
+- AssetImage
+- etc
 
 
 ## Usage
 
-This package only requires you to interact with one simple method, the extractColor(), which takes in a File object and an integer representing the number of color outputs the user wants
+This package only requires you to interact with one simple method, the extractColor(), which takes in an ImageProvider object and an integer representing the number of color outputs the user wants
 
 ```dart
-final file = File('PATH TO YOUR IMAGE');
-List<CgColor> colorList =extractColor(file, 10);
+ImageProvider provider = FileImage(File(r'test.png'));
+List<CgColor> colorList =extractColor(provider, 10);
 ```
 
 The results will be outputted in a list of CgColor objects, in order of most prominent
@@ -79,17 +68,34 @@ Color.fromARGB(255, CgColor.r, CgColor.g, CgColor.b)
 
 NOTE: The function does not take into account Alpha values, all outputs are considered to be fully opaque. Thus, the Alpha/Opacity values for the Color widgets should have a value of 255/1 respectively for accurate color representation.
 
+## Improving Performance via Resizing Images
 
+This can yield significant performance improvements, especially from a high resolution image. 
+However, do keep in mind that this will affect the percentage figures, and down sizing too much can drastically affect results, 
+especially when two colors are very similar in percentage composition.
+
+
+```dart
+extractColor(ResizeImage(provider,height:50,width: 50),1);
+```
+
+NOTE: do also account for aspect ratio when resizing.
 
 Passing a list of Images -> File/XFile type
 ```dart
-List<List<CgColor>> finalData = imageList.map((e) => extractColor(File(e.path), 10)).toList();
+List<List<CgColor>> finalData = imageList.map((e) => extractColor(FileImage(File(e.path)), 10)).toList();
 ```
-
+Passing a list of Images -> Image Provider Objects
+```dart
+final imageList = [NetworkImage, FileImage, AssetImage]
+List<List<CgColor>> finalData = imageList.map((e) => extractColor(e, 10)).toList();
+```
 ## Additional information
 
-Please note that a significant portion of the program's execution time is spent converting the Image File to UINT8 bytes. If feasible, directly passing the byte data will cut the runtime in half.
+Originally, this project supported usage in pure Dart projects, however this was sacrificed in exchange for significantly faster performance, a trade-off I deem worth it. Special thanks to And96 for the suggestions that helped to improve this package.
 
 Do contribute to the project if you find a faster alternative
+
+If you want to use it in your dart projects, please get the 1.0.1 version. 
 
 Credits: darosh on Github for the original Colorgram library
