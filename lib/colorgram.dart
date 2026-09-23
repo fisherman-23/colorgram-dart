@@ -1,8 +1,6 @@
-/// Support for doing something awesome.
+/// Extracts the most prominent colors from an image.
 ///
-/// More dartdocs go here.
-library colorgram;
+/// A Dart port of the Colorgram.js library. Start with [extractColor].
+library;
 
 export 'src/colorgram_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.

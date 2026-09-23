@@ -34,9 +34,9 @@ Supports:
 
 (based on supported file types by ImageProvider, other file types might be supported)
 
-Benchmarks: (Desktop) without resizing
-- 512x512 JPEG in ~ 30ms
-- 5120x1440 JPEG in ~200ms
+Benchmarks: (Apple M4 Pro, including decoding) without resizing
+- 512x512 JPEG in ~6ms
+- 5120x1440 JPEG in ~110ms
 
 ## Getting started
 Please ensure your data is in an ImageProvider Object
@@ -53,7 +53,7 @@ This package only requires you to interact with one simple method, the extractCo
 
 ```dart
 ImageProvider provider = FileImage(File(r'test.png'));
-List<CgColor> colorList =extractColor(provider, 10);
+List<CgColor> colorList = await extractColor(provider, 10);
 ```
 
 The results will be outputted in a list of CgColor objects, in order of most prominent
@@ -61,9 +61,9 @@ The results will be outputted in a list of CgColor objects, in order of most pro
 CgColor(int r, int g, int b, num percentage)
 ```
 
-You can then use this in your widgets using Flutter's Color object
+You can then use this in your widgets as a Flutter Color object
 ```dart
-Color.fromARGB(255, CgColor.r, CgColor.g, CgColor.b)
+Color color = cgColor.toColor(); // same as Color.fromARGB(255, cgColor.r, cgColor.g, cgColor.b)
 ```
 
 NOTE: The function does not take into account Alpha values, all outputs are considered to be fully opaque. Thus, the Alpha/Opacity values for the Color widgets should have a value of 255/1 respectively for accurate color representation.
@@ -83,12 +83,27 @@ NOTE: do also account for aspect ratio when resizing.
 
 Passing a list of Images -> File/XFile type
 ```dart
-List<List<CgColor>> finalData = imageList.map((e) => extractColor(FileImage(File(e.path)), 10)).toList();
+List<List<CgColor>> finalData = await Future.wait(imageList.map((e) => extractColor(FileImage(File(e.path)), 10)));
 ```
 Passing a list of Images -> Image Provider Objects
 ```dart
 final imageList = [NetworkImage, FileImage, AssetImage]
-List<List<CgColor>> finalData = imageList.map((e) => extractColor(e, 10)).toList();
+List<List<CgColor>> finalData = await Future.wait(imageList.map((e) => extractColor(e, 10)));
+```
+
+## Already have the image or its pixels?
+
+If you already have a decoded `ui.Image`, or its raw RGBA bytes (4 bytes per pixel, e.g. from `ui.Image.toByteData()`), you can skip the ImageProvider
+
+```dart
+List<CgColor> fromImage = await extractColorFromImage(image, 10);
+List<CgColor> fromPixels = extractColorFromRgba(rgbaBytes, 10);
+```
+
+`extractColorFromRgba` is synchronous, so for very large images you can keep it off the UI thread with a background isolate (not available on Flutter Web)
+
+```dart
+List<CgColor> colors = await Isolate.run(() => extractColorFromRgba(rgbaBytes, 10));
 ```
 ## Additional information
 
