@@ -23,3 +23,5 @@
 - Fixed animated images throwing `Bad state: Future already completed` on every frame after extracting
 - Fixed the image and a listener being kept alive after every call
 - Requires Dart 3
+- Published package is 7 KB instead of 11 MB, test images are no longer included
+- Reworked README

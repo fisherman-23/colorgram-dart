@@ -1,0 +1,9 @@
+# pub ignores .gitignore once this file exists, so repeat its rules.
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# Not needed by users, the test images alone are ~11 MB.
+test/
+colorgram.iml
