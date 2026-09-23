@@ -1,116 +1,114 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Colorgram
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+[![pub package](https://img.shields.io/pub/v/colorgram.svg)](https://pub.dev/packages/colorgram)
+[![pub points](https://img.shields.io/pub/points/colorgram)](https://pub.dev/packages/colorgram/score)
+[![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+Extract the most prominent colors from any image in Flutter. A lightweight, fast Dart port of [Colorgram.js](https://github.com/darosh/colorgram-js).
 
-
+<p align="center">
+  <img src="https://github.com/fisherman-23/colorgram-dart/assets/103990540/74ca1fa0-b6d2-4a7b-a3c9-3751e3a76e68" alt="Colorgram showcase" width="300">
+</p>
 
 ## Features
 
-This library allows you to extract colors from an image, which can be used to determine the colors of Flutter widgets or output into a CSV. This is a port of the Colorgram JS library by darosh on GitHub.
+- **Simple**: one function call, from any `ImageProvider` to a list of colors
+- **Fast**: a 512x512 JPEG in ~6ms, a 5120x1440 JPEG in ~110ms including decoding (Apple M4 Pro)
+- **Lightweight**: no dependencies besides Flutter
+- **Every platform**: Android, iOS, Web (including WebAssembly), Windows, macOS and Linux
+- **Any format Flutter can decode**: JPG, PNG, GIF, BMP, WebP, and animated APNG/GIF/WebP (first frame)
 
-It uses the Relative Luminance, Hue, and Lightness values to sample to colors. 
+Colors are grouped by their relative luminance, hue and lightness, then ranked by how much of the image they cover.
 
-Compared to other color extraction packages in Dart, this package is lightweight, fast and simple to use, removing all the bloat and only providing you with only what you need.
-<div style="display:flex; justify-content:center; align-items:center; height:100vh;">
-    <img src="https://github.com/fisherman-23/colorgram-dart/assets/103990540/74ca1fa0-b6d2-4a7b-a3c9-3751e3a76e68" alt="Showcase Image" width="300">
-</div>
+## Installation
 
-Supports:
-
-    JPG
-    PNG / Animated APNG
-    GIF / Animated GIF
-    BMP
-    WebP / Animated WebP
-
-(based on supported file types by ImageProvider, other file types might be supported)
-
-Benchmarks: (Apple M4 Pro, including decoding) without resizing
-- 512x512 JPEG in ~6ms
-- 5120x1440 JPEG in ~110ms
-
-## Getting started
-Please ensure your data is in an ImageProvider Object
-
-- FileImage
-- NetworkImage
-- AssetImage
-- etc
-
+```sh
+flutter pub add colorgram
+```
 
 ## Usage
 
-This package only requires you to interact with one simple method, the extractColor(), which takes in an ImageProvider object and an integer representing the number of color outputs the user wants
+Pass any `ImageProvider` (`FileImage`, `NetworkImage`, `AssetImage`, `MemoryImage`, ...) and the number of colors you want:
 
 ```dart
-ImageProvider provider = FileImage(File(r'test.png'));
-List<CgColor> colorList = await extractColor(provider, 10);
+import 'package:colorgram/colorgram.dart';
+
+final List<CgColor> colors = await extractColor(AssetImage('assets/photo.jpg'), 10);
+
+for (final color in colors) {
+  print('${color.r}, ${color.g}, ${color.b} covers ${color.percentage * 100}%');
+}
 ```
 
-The results will be outputted in a list of CgColor objects, in order of most prominent
-```dart
-CgColor(int r, int g, int b, num percentage)
-```
+Colors are sorted from most to least prominent. Each `CgColor` has:
 
-You can then use this in your widgets as a Flutter Color object
-```dart
-Color color = cgColor.toColor(); // same as Color.fromARGB(255, cgColor.r, cgColor.g, cgColor.b)
-```
+| Field        | Type  | Description                                      |
+| ------------ | ----- | ------------------------------------------------ |
+| `r`, `g`, `b` | `int` | Color channels, 0 to 255                          |
+| `percentage` | `num` | Share of the image this color covers, 0 to 1     |
 
-NOTE: The function does not take into account Alpha values, all outputs are considered to be fully opaque. Thus, the Alpha/Opacity values for the Color widgets should have a value of 255/1 respectively for accurate color representation.
+You may get fewer colors than you asked for if the image doesn't have that many.
 
-## Improving Performance via Resizing Images
-
-This can yield significant performance improvements, especially from a high resolution image. 
-However, do keep in mind that this will affect the percentage figures, and down sizing too much can drastically affect results, 
-especially when two colors are very similar in percentage composition.
-
+### Using the colors in widgets
 
 ```dart
-extractColor(ResizeImage(provider,height:50,width: 50),1);
+Container(color: colors.first.toColor());
 ```
 
-NOTE: do also account for aspect ratio when resizing.
+`toColor()` is the same as `Color.fromARGB(255, color.r, color.g, color.b)`.
 
-Passing a list of Images -> File/XFile type
-```dart
-List<List<CgColor>> finalData = await Future.wait(imageList.map((e) => extractColor(FileImage(File(e.path)), 10)));
-```
-Passing a list of Images -> Image Provider Objects
-```dart
-final imageList = [NetworkImage, FileImage, AssetImage]
-List<List<CgColor>> finalData = await Future.wait(imageList.map((e) => extractColor(e, 10)));
-```
-
-## Already have the image or its pixels?
-
-If you already have a decoded `ui.Image`, or its raw RGBA bytes (4 bytes per pixel, e.g. from `ui.Image.toByteData()`), you can skip the ImageProvider
+### Multiple images
 
 ```dart
-List<CgColor> fromImage = await extractColorFromImage(image, 10);
-List<CgColor> fromPixels = extractColorFromRgba(rgbaBytes, 10);
+final List<List<CgColor>> palettes = await Future.wait(
+  providers.map((provider) => extractColor(provider, 10)),
+);
 ```
 
-`extractColorFromRgba` is synchronous, so for very large images you can keep it off the UI thread with a background isolate (not available on Flutter Web)
+### Already have the image or its pixels?
+
+Skip the `ImageProvider` if you have a decoded `ui.Image`, or its raw RGBA bytes (4 bytes per pixel, e.g. from `ui.Image.toByteData()`):
 
 ```dart
-List<CgColor> colors = await Isolate.run(() => extractColorFromRgba(rgbaBytes, 10));
+final fromImage = await extractColorFromImage(image, 10); // doesn't dispose the image
+final fromPixels = extractColorFromRgba(rgbaBytes, 10);
 ```
-## Additional information
 
-Originally, this project supported usage in pure Dart projects, however this was sacrificed in exchange for significantly faster performance, a trade-off I deem worth it. Special thanks to And96 for the suggestions that helped to improve this package.
+## Performance tips
 
-Do contribute to the project if you find a faster alternative
+### Resize large images
 
-If you want to use it in your dart projects, please get the 1.0.1 version. 
+Decoding is the slowest step for large images, and a few hundred pixels is plenty to find the main colors. Wrapping the provider in a `ResizeImage` makes Flutter decode it at a smaller size:
 
-Credits: darosh on Github for the original Colorgram library
+```dart
+final colors = await extractColor(
+  ResizeImage(provider, width: 256, height: 256, policy: ResizeImagePolicy.fit),
+  10,
+);
+```
+
+`ResizeImagePolicy.fit` keeps the aspect ratio. For a 5120x1440 JPEG this takes ~66ms instead of ~110ms, and the percentages stay within about 1 percentage point of the full size result. Shrinking much further can start to reorder colors that cover a similar share of the image.
+
+### Keep huge images off the UI thread
+
+`extractColorFromRgba` is synchronous, so you can run it in a background isolate (not available on Flutter Web):
+
+```dart
+final colors = await Isolate.run(() => extractColorFromRgba(rgbaBytes, 10));
+```
+
+## Notes
+
+- Alpha is ignored. Pixels are read as premultiplied RGBA, so transparent areas count as black, and all results are fully opaque.
+- Version 2.0 dropped pure Dart support in exchange for much faster decoding through Flutter. For pure Dart projects, use version 1.0.1.
+
+## Example
+
+For a full app built with Colorgram, see [colorgram-app](https://github.com/fisherman-23/colorgram-app).
+
+## Credits
+
+- [darosh](https://github.com/darosh) for the original Colorgram.js
+- And96 for the suggestions that made 2.0 much faster
+
+Contributions are welcome, especially if you find a faster approach!

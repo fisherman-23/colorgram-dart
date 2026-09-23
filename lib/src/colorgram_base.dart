@@ -18,10 +18,19 @@ const int _cubes = 16384;
 ///
 /// CgColor(255,255,255,0.9)
 class CgColor {
-  final int r; //out of 255
+  /// Red channel, 0 to 255.
+  final int r;
+
+  /// Green channel, 0 to 255.
   final int g;
+
+  /// Blue channel, 0 to 255.
   final int b;
-  num percentage; // between 0 - 1
+
+  /// Share of the image this color covers, 0 to 1.
+  num percentage;
+
+  /// Creates a color from its channels and the share of the image it covers.
   CgColor(this.r, this.g, this.b, this.percentage);
 
   /// Returns this color as a fully opaque Flutter [Color].
